@@ -16,5 +16,5 @@
   // ファイル末尾には自動的に空行を挿入します
   "files.insertFinalNewline": true,
   // 拡張機能のインストール推奨を非表示にできないようにします
-  "extensions.ignoreRecommendations": false,
+  "extensions.ignoreRecommendations": false
 }
