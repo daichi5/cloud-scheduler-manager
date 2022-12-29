@@ -1,4 +1,4 @@
 #!/usr/bin/env node
 
-import { hello } from '..';
-hello();
+import { cloudSchedulerManager } from '..';
+cloudSchedulerManager();

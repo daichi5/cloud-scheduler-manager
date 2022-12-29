@@ -1,2 +1,2 @@
-export declare const hello: () => void;
+export declare const cloudSchedulerManager: () => void;
 //# sourceMappingURL=index.d.ts.map
