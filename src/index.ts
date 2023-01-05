@@ -1,5 +1,6 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import { CloudSchedulerManager } from './cloud-scheduler-manager';
 
 export const cloudSchedulerManager = async (): Promise<void> => {
   const argv = await yargs(hideBin(process.argv))
@@ -32,7 +33,20 @@ export const cloudSchedulerManager = async (): Promise<void> => {
     process.env.GOOGLE_APPLICATION_CREDENTIALS
   );
 
-  console.log(credential);
+  const client = new CloudSchedulerManager(
+    credential,
+    argv.projectId,
+    argv.region
+  );
+
+  switch (argv._[0]) {
+    case 'update':
+      await client.update();
+      break;
+
+    default:
+      throw new Error('unknown command.');
+  }
 };
 
 function getCredential(

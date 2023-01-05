@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.cloudSchedulerManager = void 0;
 const yargs_1 = __importDefault(require("yargs"));
 const helpers_1 = require("yargs/helpers");
+const cloud_scheduler_manager_1 = require("./cloud-scheduler-manager");
 const cloudSchedulerManager = async () => {
     const argv = await (0, yargs_1.default)((0, helpers_1.hideBin)(process.argv))
         .command('update', 'update Cloud Scheduler settings.')
@@ -32,7 +33,14 @@ const cloudSchedulerManager = async () => {
         .strictOptions()
         .help().argv;
     const credential = getCredential(argv.credentials, process.env.GOOGLE_APPLICATION_CREDENTIALS);
-    console.log(credential);
+    const client = new cloud_scheduler_manager_1.CloudSchedulerManager(credential, argv.projectId, argv.region);
+    switch (argv._[0]) {
+        case 'update':
+            await client.update();
+            break;
+        default:
+            throw new Error('unknown command.');
+    }
 };
 exports.cloudSchedulerManager = cloudSchedulerManager;
 function getCredential(argCred = '', envCred = '') {
