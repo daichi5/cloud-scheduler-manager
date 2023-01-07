@@ -76,6 +76,11 @@ class CloudSchedulerManager {
             }
         }
     }
+    async sync(configPath) {
+        await this.prune(configPath);
+        await this.create(configPath);
+        await this.update(configPath);
+    }
     #getConfig(configPath) {
         const config = (0, js_yaml_1.load)((0, fs_1.readFileSync)(configPath, 'utf8'));
         for (const job of config.jobs) {

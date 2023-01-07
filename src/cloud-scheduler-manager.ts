@@ -135,6 +135,12 @@ class CloudSchedulerManager {
     }
   }
 
+  async sync(configPath: string): Promise<void> {
+    await this.prune(configPath);
+    await this.create(configPath);
+    await this.update(configPath);
+  }
+
   #getConfig(configPath: string): JobsConfig {
     const config = load(readFileSync(configPath, 'utf8')) as JobsConfig;
 
