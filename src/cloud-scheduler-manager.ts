@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { load } from 'js-yaml';
+import { validate } from 'node-cron';
 import { CloudSchedulerClient } from '@google-cloud/scheduler';
 
 type JobConfig = {
@@ -28,7 +29,14 @@ class CloudSchedulerManager {
   }
 
   #getConfig(configPath: string): JobsConfig {
-    return load(readFileSync(configPath, 'utf8')) as JobsConfig;
+    const config = load(readFileSync(configPath, 'utf8')) as JobsConfig;
+
+    for (const job of config.jobs) {
+      if (!validate(job.schedule))
+        throw new Error(`invalid schedule format: ${job.schedule}`);
+    }
+
+    return config;
   }
 }
 export { CloudSchedulerManager };
