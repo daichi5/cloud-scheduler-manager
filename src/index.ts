@@ -6,6 +6,7 @@ export const cloudSchedulerManager = async (): Promise<void> => {
   const argv = await yargs(hideBin(process.argv))
     .command('update', 'update Cloud Scheduler settings.')
     .command('create', 'create Cloud Schedulers')
+    .command('prune', 'prune Cloud Schedulers that are not defined in config.')
     .option('projectId', {
       type: 'string',
       describe: 'GCP Project ID',
@@ -53,6 +54,10 @@ export const cloudSchedulerManager = async (): Promise<void> => {
 
       case 'create':
         await client.create(argv.config);
+        break;
+
+      case 'prune':
+        await client.prune(argv.config);
         break;
 
       default:

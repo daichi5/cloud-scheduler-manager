@@ -51,6 +51,31 @@ class CloudSchedulerManager {
             console.log('created job: ', jobConfig.name);
         });
     }
+    async prune(configPath) {
+        const config = this.#getConfig(configPath);
+        const jobList = await this.client
+            .listJobs({
+            parent: this.client.locationPath(this.projectId, this.region),
+        })
+            .then((res) => res[0]);
+        for (const job of jobList) {
+            if (!job.name) {
+                continue;
+            }
+            const existsJob = config.jobs.find((j) => {
+                const jobPath = this.client.jobPath(this.projectId, this.region, j.name);
+                return jobPath === job.name;
+            });
+            if (existsJob) {
+                continue;
+            }
+            if (job.name.match(config.prune.target.name.regexp)) {
+                console.log('deleting job: ', job.name);
+                await this.client.deleteJob({ name: job.name });
+                console.log('deleted job: ', job.name);
+            }
+        }
+    }
     #getConfig(configPath) {
         const config = (0, js_yaml_1.load)((0, fs_1.readFileSync)(configPath, 'utf8'));
         for (const job of config.jobs) {
@@ -67,7 +92,7 @@ class CloudSchedulerManager {
                 .getJob({ name: jobPath })
                 .then((res) => res[0])
                 .catch(() => null);
-            action(jobInfo, jobConfig);
+            await action(jobInfo, jobConfig);
         }
     }
 }

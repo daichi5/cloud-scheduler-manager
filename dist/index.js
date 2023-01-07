@@ -11,6 +11,7 @@ const cloudSchedulerManager = async () => {
     const argv = await (0, yargs_1.default)((0, helpers_1.hideBin)(process.argv))
         .command('update', 'update Cloud Scheduler settings.')
         .command('create', 'create Cloud Schedulers')
+        .command('prune', 'prune Cloud Schedulers that are not defined in config.')
         .option('projectId', {
         type: 'string',
         describe: 'GCP Project ID',
@@ -47,6 +48,9 @@ const cloudSchedulerManager = async () => {
                 break;
             case 'create':
                 await client.create(argv.config);
+                break;
+            case 'prune':
+                await client.prune(argv.config);
                 break;
             default:
                 throw new Error('unknown command.');
