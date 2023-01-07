@@ -16,7 +16,7 @@ type JobsConfig = {
 };
 
 type Action = (
-  jobInfo: protos.google.cloud.scheduler.v1.IJob,
+  jobInfo: protos.google.cloud.scheduler.v1.IJob | null,
   jobConfig: JobConfig
 ) => void;
 
@@ -35,6 +35,16 @@ class CloudSchedulerManager {
     const config = this.#getConfig(configPath);
 
     await this.#applyAction(config, async (jobInfo, jobConfig) => {
+      if (!jobInfo) {
+        throw new Error(
+          `job not found: ${this.client.jobPath(
+            this.projectId,
+            this.region,
+            jobConfig.name
+          )}`
+        );
+      }
+
       console.log('updating job: ', jobInfo.name);
 
       await this.client.updateJob({
@@ -48,6 +58,33 @@ class CloudSchedulerManager {
       });
 
       console.log('updated job: ', jobInfo.name);
+    });
+  }
+
+  async create(configPath: string): Promise<void> {
+    const config = this.#getConfig(configPath);
+
+    await this.#applyAction(config, async (jobInfo, jobConfig) => {
+      if (jobInfo) {
+        console.log('job already exists: ', jobInfo.name);
+        return;
+      }
+
+      console.log('creating job: ', jobConfig.name);
+
+      await this.client.createJob({
+        parent: this.client.locationPath(this.projectId, this.region),
+        job: {
+          name: this.client.jobPath(
+            this.projectId,
+            this.region,
+            jobConfig.name
+          ),
+          schedule: jobConfig.schedule,
+          description: jobConfig.description,
+          timeZone: jobConfig.time_zone,
+        },
+      });
     });
   }
 
@@ -73,11 +110,10 @@ class CloudSchedulerManager {
 
       const jobInfo = await this.client
         .getJob({ name: jobPath })
-        .then((res) => res[0]);
+        .then((res) => res[0])
+        .catch(() => null);
 
-      if (!jobInfo) {
-        console.log('job not found: ', jobPath);
-      }
+      console.log(jobInfo);
 
       action(jobInfo, jobConfig);
     }

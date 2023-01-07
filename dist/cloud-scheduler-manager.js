@@ -17,6 +17,9 @@ class CloudSchedulerManager {
     async update(configPath) {
         const config = this.#getConfig(configPath);
         await this.#applyAction(config, async (jobInfo, jobConfig) => {
+            if (!jobInfo) {
+                throw new Error(`job not found: ${this.client.jobPath(this.projectId, this.region, jobConfig.name)}`);
+            }
             console.log('updating job: ', jobInfo.name);
             await this.client.updateJob({
                 job: {
@@ -28,6 +31,25 @@ class CloudSchedulerManager {
                 updateMask: { paths: ['schedule', 'description', 'time_zone'] },
             });
             console.log('updated job: ', jobInfo.name);
+        });
+    }
+    async create(configPath) {
+        const config = this.#getConfig(configPath);
+        await this.#applyAction(config, async (jobInfo, jobConfig) => {
+            if (jobInfo) {
+                console.log('job already exists: ', jobInfo.name);
+                return;
+            }
+            console.log('creating job: ', jobConfig.name);
+            await this.client.createJob({
+                parent: this.client.locationPath(this.projectId, this.region),
+                job: {
+                    name: this.client.jobPath(this.projectId, this.region, jobConfig.name),
+                    schedule: jobConfig.schedule,
+                    description: jobConfig.description,
+                    timeZone: jobConfig.time_zone,
+                },
+            });
         });
     }
     #getConfig(configPath) {
@@ -44,10 +66,9 @@ class CloudSchedulerManager {
             const jobPath = this.client.jobPath(this.projectId, this.region, jobConfig.name);
             const jobInfo = await this.client
                 .getJob({ name: jobPath })
-                .then((res) => res[0]);
-            if (!jobInfo) {
-                console.log('job not found: ', jobPath);
-            }
+                .then((res) => res[0])
+                .catch(() => null);
+            console.log(jobInfo);
             action(jobInfo, jobConfig);
         }
     }

@@ -45,6 +45,9 @@ const cloudSchedulerManager = async () => {
             case 'update':
                 await client.update(argv.config);
                 break;
+            case 'create':
+                await client.create(argv.config);
+                break;
             default:
                 throw new Error('unknown command.');
         }
