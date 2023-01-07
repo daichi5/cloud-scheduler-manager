@@ -23,6 +23,12 @@ export const cloudSchedulerManager = async (): Promise<void> => {
       describe: 'path to GCP credential file',
       demandOption: false,
     })
+    .option('config', {
+      type: 'string',
+      describe: 'path to config file',
+      demandOption: true,
+      requiresArg: true,
+    })
     .demandCommand(1, 1)
     .strictCommands()
     .strictOptions()
@@ -39,14 +45,15 @@ export const cloudSchedulerManager = async (): Promise<void> => {
     argv.region
   );
 
-  switch (argv._[0]) {
-    case 'update':
-      await client.update();
-      break;
+  if (argv.config)
+    switch (argv._[0]) {
+      case 'update':
+        await client.update(argv.config);
+        break;
 
-    default:
-      throw new Error('unknown command.');
-  }
+      default:
+        throw new Error('unknown command.');
+    }
 };
 
 function getCredential(

@@ -1,4 +1,15 @@
+import { readFileSync } from 'fs';
+import { load } from 'js-yaml';
 import { CloudSchedulerClient } from '@google-cloud/scheduler';
+
+type JobConfig = {
+  name: string;
+  schedule: string;
+};
+
+type JobsConfig = {
+  jobs: JobConfig[];
+};
 
 class CloudSchedulerManager {
   private client: CloudSchedulerClient;
@@ -11,8 +22,13 @@ class CloudSchedulerManager {
     this.region = region;
   }
 
-  async update(): Promise<void> {
-    console.log('update');
+  async update(configPath: string): Promise<void> {
+    const config = this.#getConfig(configPath);
+    console.log(config);
+  }
+
+  #getConfig(configPath: string): JobsConfig {
+    return load(readFileSync(configPath, 'utf8')) as JobsConfig;
   }
 }
 export { CloudSchedulerManager };

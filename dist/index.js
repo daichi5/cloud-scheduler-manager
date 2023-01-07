@@ -28,19 +28,26 @@ const cloudSchedulerManager = async () => {
         describe: 'path to GCP credential file',
         demandOption: false,
     })
+        .option('config', {
+        type: 'string',
+        describe: 'path to config file',
+        demandOption: true,
+        requiresArg: true,
+    })
         .demandCommand(1, 1)
         .strictCommands()
         .strictOptions()
         .help().argv;
     const credential = getCredential(argv.credentials, process.env.GOOGLE_APPLICATION_CREDENTIALS);
     const client = new cloud_scheduler_manager_1.CloudSchedulerManager(credential, argv.projectId, argv.region);
-    switch (argv._[0]) {
-        case 'update':
-            await client.update();
-            break;
-        default:
-            throw new Error('unknown command.');
-    }
+    if (argv.config)
+        switch (argv._[0]) {
+            case 'update':
+                await client.update(argv.config);
+                break;
+            default:
+                throw new Error('unknown command.');
+        }
 };
 exports.cloudSchedulerManager = cloudSchedulerManager;
 function getCredential(argCred = '', envCred = '') {
