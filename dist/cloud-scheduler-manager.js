@@ -15,11 +15,30 @@ class CloudSchedulerManager {
         this.region = region;
     }
     async update(configPath) {
-        const info = await this.client.listJobs({
-            parent: this.client.locationPath(this.projectId, this.region),
-        });
-        console.log(info);
         const config = this.#getConfig(configPath);
+        await this.#applyAction(config, async (jobInfo, jobConfig) => {
+            console.log('updating job: ', jobInfo.name);
+            await this.client.updateJob({
+                job: {
+                    name: jobInfo.name,
+                    schedule: jobConfig.schedule,
+                    description: jobConfig.description ?? jobInfo.description,
+                    timeZone: jobConfig.time_zone ?? jobInfo.timeZone,
+                },
+                updateMask: { paths: ['schedule', 'description', 'time_zone'] },
+            });
+            console.log('updated job: ', jobInfo.name);
+        });
+    }
+    #getConfig(configPath) {
+        const config = (0, js_yaml_1.load)((0, fs_1.readFileSync)(configPath, 'utf8'));
+        for (const job of config.jobs) {
+            if (!(0, node_cron_1.validate)(job.schedule))
+                throw new Error(`invalid schedule format: ${job.schedule}`);
+        }
+        return config;
+    }
+    async #applyAction(config, action) {
         for (const job of config.jobs) {
             const jobConfig = { ...config.common, ...job };
             const jobPath = this.client.jobPath(this.projectId, this.region, jobConfig.name);
@@ -29,26 +48,8 @@ class CloudSchedulerManager {
             if (!jobInfo) {
                 console.log('job not found: ', jobPath);
             }
-            console.log('updating job: ', jobPath);
-            await this.client.updateJob({
-                job: {
-                    name: jobPath,
-                    schedule: jobConfig.schedule,
-                    description: jobConfig.description ?? jobInfo.description,
-                    timeZone: jobConfig.time_zone ?? jobInfo.timeZone,
-                },
-                updateMask: { paths: ['schedule', 'description', 'time_zone'] },
-            });
-            console.log('updated job: ', jobPath);
+            action(jobInfo, jobConfig);
         }
-    }
-    #getConfig(configPath) {
-        const config = (0, js_yaml_1.load)((0, fs_1.readFileSync)(configPath, 'utf8'));
-        for (const job of config.jobs) {
-            if (!(0, node_cron_1.validate)(job.schedule))
-                throw new Error(`invalid schedule format: ${job.schedule}`);
-        }
-        return config;
     }
 }
 exports.CloudSchedulerManager = CloudSchedulerManager;

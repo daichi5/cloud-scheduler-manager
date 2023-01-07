@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { load } from 'js-yaml';
 import { validate } from 'node-cron';
-import { CloudSchedulerClient } from '@google-cloud/scheduler';
+import { CloudSchedulerClient, protos } from '@google-cloud/scheduler';
 
 type JobConfig = {
   name: string;
@@ -15,6 +15,11 @@ type JobsConfig = {
   common: JobConfig;
 };
 
+type Action = (
+  jobInfo: protos.google.cloud.scheduler.v1.IJob,
+  jobConfig: JobConfig
+) => void;
+
 class CloudSchedulerManager {
   private client: CloudSchedulerClient;
   private projectId: string;
@@ -27,14 +32,37 @@ class CloudSchedulerManager {
   }
 
   async update(configPath: string): Promise<void> {
-    const info = await this.client.listJobs({
-      parent: this.client.locationPath(this.projectId, this.region),
-    });
-
-    console.log(info);
-
     const config = this.#getConfig(configPath);
 
+    await this.#applyAction(config, async (jobInfo, jobConfig) => {
+      console.log('updating job: ', jobInfo.name);
+
+      await this.client.updateJob({
+        job: {
+          name: jobInfo.name,
+          schedule: jobConfig.schedule,
+          description: jobConfig.description ?? jobInfo.description,
+          timeZone: jobConfig.time_zone ?? jobInfo.timeZone,
+        },
+        updateMask: { paths: ['schedule', 'description', 'time_zone'] },
+      });
+
+      console.log('updated job: ', jobInfo.name);
+    });
+  }
+
+  #getConfig(configPath: string): JobsConfig {
+    const config = load(readFileSync(configPath, 'utf8')) as JobsConfig;
+
+    for (const job of config.jobs) {
+      if (!validate(job.schedule))
+        throw new Error(`invalid schedule format: ${job.schedule}`);
+    }
+
+    return config;
+  }
+
+  async #applyAction(config: JobsConfig, action: Action) {
     for (const job of config.jobs) {
       const jobConfig = { ...config.common, ...job };
       const jobPath = this.client.jobPath(
@@ -51,31 +79,8 @@ class CloudSchedulerManager {
         console.log('job not found: ', jobPath);
       }
 
-      console.log('updating job: ', jobPath);
-
-      await this.client.updateJob({
-        job: {
-          name: jobPath,
-          schedule: jobConfig.schedule,
-          description: jobConfig.description ?? jobInfo.description,
-          timeZone: jobConfig.time_zone ?? jobInfo.timeZone,
-        },
-        updateMask: { paths: ['schedule', 'description', 'time_zone'] },
-      });
-
-      console.log('updated job: ', jobPath);
+      action(jobInfo, jobConfig);
     }
-  }
-
-  #getConfig(configPath: string): JobsConfig {
-    const config = load(readFileSync(configPath, 'utf8')) as JobsConfig;
-
-    for (const job of config.jobs) {
-      if (!validate(job.schedule))
-        throw new Error(`invalid schedule format: ${job.schedule}`);
-    }
-
-    return config;
   }
 }
 export { CloudSchedulerManager };
