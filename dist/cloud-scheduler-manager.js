@@ -16,7 +16,10 @@ class CloudSchedulerManager {
     }
     async update(configPath) {
         const config = this.#getConfig(configPath);
-        console.log(config);
+        for (const job of config.jobs) {
+            const jobPath = this.client.jobPath(this.projectId, this.region, job.name);
+            console.log(jobPath);
+        }
     }
     #getConfig(configPath) {
         const config = (0, js_yaml_1.load)((0, fs_1.readFileSync)(configPath, 'utf8'));
