@@ -1,16 +1,18 @@
 import { readFileSync } from 'fs';
 import { load } from 'js-yaml';
 import { validate } from 'node-cron';
-import { CloudSchedulerClient, protos } from '@google-cloud/scheduler';
+import { CloudSchedulerClient } from '@google-cloud/scheduler';
 
 type JobConfig = {
   name: string;
   schedule: string;
   description: string | undefined;
+  time_zone: string | undefined;
 };
 
 type JobsConfig = {
   jobs: JobConfig[];
+  common: JobConfig;
 };
 
 class CloudSchedulerManager {
@@ -34,10 +36,11 @@ class CloudSchedulerManager {
     const config = this.#getConfig(configPath);
 
     for (const job of config.jobs) {
+      const jobConfig = { ...config.common, ...job };
       const jobPath = this.client.jobPath(
         this.projectId,
         this.region,
-        job.name
+        jobConfig.name
       );
 
       const jobInfo = await this.client
@@ -53,10 +56,11 @@ class CloudSchedulerManager {
       await this.client.updateJob({
         job: {
           name: jobPath,
-          schedule: job.schedule,
-          description: job.description ?? jobInfo.description,
+          schedule: jobConfig.schedule,
+          description: jobConfig.description ?? jobInfo.description,
+          timeZone: jobConfig.time_zone ?? jobInfo.timeZone,
         },
-        updateMask: { paths: ['schedule', 'description'] },
+        updateMask: { paths: ['schedule', 'description', 'time_zone'] },
       });
 
       console.log('updated job: ', jobPath);

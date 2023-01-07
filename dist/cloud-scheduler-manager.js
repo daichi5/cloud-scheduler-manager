@@ -15,10 +15,31 @@ class CloudSchedulerManager {
         this.region = region;
     }
     async update(configPath) {
+        const info = await this.client.listJobs({
+            parent: this.client.locationPath(this.projectId, this.region),
+        });
+        console.log(info);
         const config = this.#getConfig(configPath);
         for (const job of config.jobs) {
-            const jobPath = this.client.jobPath(this.projectId, this.region, job.name);
-            console.log(jobPath);
+            const jobConfig = { ...config.common, ...job };
+            const jobPath = this.client.jobPath(this.projectId, this.region, jobConfig.name);
+            const jobInfo = await this.client
+                .getJob({ name: jobPath })
+                .then((res) => res[0]);
+            if (!jobInfo) {
+                console.log('job not found: ', jobPath);
+            }
+            console.log('updating job: ', jobPath);
+            await this.client.updateJob({
+                job: {
+                    name: jobPath,
+                    schedule: jobConfig.schedule,
+                    description: jobConfig.description ?? jobInfo.description,
+                    timeZone: jobConfig.time_zone ?? jobInfo.timeZone,
+                },
+                updateMask: { paths: ['schedule', 'description', 'time_zone'] },
+            });
+            console.log('updated job: ', jobPath);
         }
     }
     #getConfig(configPath) {
