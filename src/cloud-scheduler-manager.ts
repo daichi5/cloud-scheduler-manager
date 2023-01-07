@@ -7,7 +7,12 @@ type JobConfig = {
   name: string;
   schedule: string;
   description: string | undefined;
-  time_zone: string | undefined;
+  timeZone: string | undefined;
+  pubsubTarget?: {
+    topicName: string;
+    data?: string;
+    attributes?: { [key: string]: string };
+  };
 };
 
 type JobsConfig = {
@@ -52,7 +57,7 @@ class CloudSchedulerManager {
           name: jobInfo.name,
           schedule: jobConfig.schedule,
           description: jobConfig.description ?? jobInfo.description,
-          timeZone: jobConfig.time_zone ?? jobInfo.timeZone,
+          timeZone: jobConfig.timeZone ?? jobInfo.timeZone,
         },
         updateMask: { paths: ['schedule', 'description', 'time_zone'] },
       });
@@ -75,16 +80,16 @@ class CloudSchedulerManager {
       await this.client.createJob({
         parent: this.client.locationPath(this.projectId, this.region),
         job: {
+          ...jobConfig,
           name: this.client.jobPath(
             this.projectId,
             this.region,
             jobConfig.name
           ),
-          schedule: jobConfig.schedule,
-          description: jobConfig.description,
-          timeZone: jobConfig.time_zone,
         },
       });
+
+      console.log('created job: ', jobConfig.name);
     });
   }
 
@@ -112,8 +117,6 @@ class CloudSchedulerManager {
         .getJob({ name: jobPath })
         .then((res) => res[0])
         .catch(() => null);
-
-      console.log(jobInfo);
 
       action(jobInfo, jobConfig);
     }
