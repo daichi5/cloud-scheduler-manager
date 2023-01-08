@@ -37,13 +37,20 @@ prune:
 
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS=./path/to/cred_file
-npx cloud-scheduler-manager create --projectId sample --region us-central1 --config config.yaml
+npx cloud-scheduler-manager create \
+--projectId sample \
+--region us-central1 \
+--config config.yaml
 ```
 
 You can also use `--credentials` option instead of `GOOGLE_APPLICATION_CREDENTIALS` env.
 
 ```bash
-npx cloud-scheduler-manager create --projectId sample --region us-central1 --config config.yaml --credentials ./path/to/cred_file
+npx cloud-scheduler-manager create \
+--projectId sample \
+--region us-central1 \
+--config config.yaml \
+--credentials ./path/to/cred_file
 ```
 
 and you can use `update, prune, sync` sub commands.
