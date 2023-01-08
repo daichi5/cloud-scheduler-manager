@@ -6,7 +6,7 @@
     "node": ">=16.0.0"
   },
   "bin": {
-    "cloud-scheduler-manager": "dist/index.js"
+    "cloud-scheduler-manager": "dist/bin/index.js"
   },
   "main": "dist/index.js",
   "module": "dist/esm/index.esm.js",

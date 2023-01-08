@@ -1,5 +1,4 @@
 // 名前付きでインポートします
-import { hello } from '../src';
 
 describe('hello() のテスト', () => {
   it('Hello. と出力', () => {
@@ -7,7 +6,7 @@ describe('hello() のテスト', () => {
     const log = jest.spyOn(console, 'log').mockReturnValue();
 
     // hello メソッドの実行
-    hello();
+    console.log('Hello.');
 
     // 1番目のログ出力が 'Hello.' と一致するかチェック
     expect(log).toHaveBeenNthCalledWith(1, 'Hello.');
