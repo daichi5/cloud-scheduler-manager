@@ -2,7 +2,7 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { CloudSchedulerManager } from './cloud-scheduler-manager';
 
-export const cloudSchedulerManager = async (): Promise<void> => {
+export const main = async (): Promise<void> => {
   const argv = await yargs(hideBin(process.argv))
     .command('update', 'update Cloud Scheduler settings.')
     .command('create', 'create Cloud Schedulers')

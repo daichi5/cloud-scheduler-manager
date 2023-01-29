@@ -1,2 +1,2 @@
-export declare const cloudSchedulerManager: () => void;
+export declare const main: () => Promise<void>;
 //# sourceMappingURL=index.d.ts.map
