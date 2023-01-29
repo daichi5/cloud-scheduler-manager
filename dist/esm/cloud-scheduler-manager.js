@@ -2,12 +2,6 @@ import { readFileSync } from 'fs';
 import { load } from 'js-yaml';
 import { validate } from 'node-cron';
 import { CloudSchedulerClient } from '@google-cloud/scheduler';
-class A {
-    value;
-    constructor(value) {
-        this.value = value;
-    }
-}
 class CloudSchedulerManager {
     client;
     projectId;
@@ -18,7 +12,7 @@ class CloudSchedulerManager {
         this.region = region;
     }
     async update(configPath) {
-        const config = this.getConfig(configPath);
+        const config = this.#getConfig(configPath);
         await this.#applyAction(config, async (jobInfo, jobConfig) => {
             if (!jobInfo) {
                 throw new Error(`job not found: ${this.client.jobPath(this.projectId, this.region, jobConfig.name)}`);
@@ -37,7 +31,7 @@ class CloudSchedulerManager {
         });
     }
     async create(configPath) {
-        const config = this.getConfig(configPath);
+        const config = this.#getConfig(configPath);
         await this.#applyAction(config, async (jobInfo, jobConfig) => {
             if (jobInfo) {
                 console.log('job already exists: ', jobInfo.name);
@@ -55,7 +49,7 @@ class CloudSchedulerManager {
         });
     }
     async prune(configPath) {
-        const config = this.getConfig(configPath);
+        const config = this.#getConfig(configPath);
         const jobList = await this.client
             .listJobs({
             parent: this.client.locationPath(this.projectId, this.region),
@@ -84,7 +78,7 @@ class CloudSchedulerManager {
         await this.create(configPath);
         await this.update(configPath);
     }
-    getConfig(configPath) {
+    #getConfig(configPath) {
         const config = load(readFileSync(configPath, 'utf8'));
         for (const job of config.jobs) {
             if (!validate(job.schedule))

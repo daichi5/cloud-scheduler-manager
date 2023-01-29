@@ -41,34 +41,48 @@ export const main = async (): Promise<void> => {
     process.env.GOOGLE_APPLICATION_CREDENTIALS
   );
 
-  const client = new CloudSchedulerManager(
+  dispatchCommand(
+    argv._[0],
+    argv.config,
     credential,
     argv.projectId,
     argv.region
   );
+};
 
-  if (argv.config)
-    switch (argv._[0]) {
+async function dispatchCommand(
+  command: string | number,
+  config: string,
+  credential: string,
+  projectId: string,
+  region: string,
+  clientInstance: CloudSchedulerManager | undefined = undefined
+): Promise<Promise<Promise<Promise<void>>>> {
+  const client =
+    clientInstance || new CloudSchedulerManager(credential, projectId, region);
+
+  if (config)
+    switch (command) {
       case 'update':
-        await client.update(argv.config);
+        await client.update(config);
         break;
 
       case 'create':
-        await client.create(argv.config);
+        await client.create(config);
         break;
 
       case 'prune':
-        await client.prune(argv.config);
+        await client.prune(config);
         break;
 
       case 'sync':
-        await client.sync(argv.config);
+        await client.sync(config);
         break;
 
       default:
         throw new Error('unknown command.');
     }
-};
+}
 
 function getCredential(
   argCred: string | undefined = '',
